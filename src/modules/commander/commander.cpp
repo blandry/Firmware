@@ -2033,6 +2033,17 @@ int commander_thread_main(int argc, char *argv[])
 							} else {
 								mavlink_and_console_log_emergency(&mavlink_log_pub, "CRITICAL BATTERY, LANDING FAILED");
 							}
+						} else if (low_bat_action == 3) {
+							if (!rtl_on) {
+								if (TRANSITION_CHANGED == main_state_transition(&status, commander_state_s::MAIN_STATE_AUTO_RTL, main_state_prev, &status_flags, &internal_state)) {
+									rtl_on = true;
+									mavlink_and_console_log_emergency(&mavlink_log_pub, "CRITICAL BATTERY, RETURNING TO LAND");
+								} else if (TRANSITION_CHANGED == main_state_transition(&status, commander_state_s::MAIN_STATE_AUTO_LAND, main_state_prev, &status_flags, &internal_state)) {
+									mavlink_and_console_log_emergency(&mavlink_log_pub, "CRITICAL BATTERY, RTL FAILED, LANDING AT CURRENT POSITION");
+								} else {
+									mavlink_and_console_log_emergency(&mavlink_log_pub, "CRITICAL BATTERY, RTL AND LANDING FAILED");
+								}
+							}
 						} else {
 							mavlink_and_console_log_emergency(&mavlink_log_pub, "CRITICAL BATTERY, LANDING ADVISED!");
 						}

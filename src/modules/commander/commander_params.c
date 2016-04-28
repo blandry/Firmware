@@ -259,6 +259,7 @@ PARAM_DEFINE_INT32(COM_DISARM_LAND, 0);
  * @value 0 Warning
  * @value 1 Return to Land
  * @value 2 Land at current position
+ * @value 3 Try Return to Land, otherwise land at current position
  * @decimal 0
  * @increment 1
  */
