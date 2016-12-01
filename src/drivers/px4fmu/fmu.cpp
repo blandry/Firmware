@@ -86,6 +86,7 @@
 #include <uORB/topics/parameter_update.h>
 #include <uORB/topics/safety.h>
 #include <uORB/topics/adc_report.h>
+#include <uORB/topics/vehicle_control_mode.h>
 
 
 #ifdef HRT_PPM_CHANNEL
@@ -227,6 +228,9 @@ private:
 	bool		_safety_disabled;
 	orb_advert_t		_to_safety;
 
+	int		_control_mode_sub; /**< vehicle control mode subscription */
+	struct vehicle_control_mode_s _control_mode; /**< vehicle control mode */
+
 	float _mot_t_max;	// maximum rise time for motor (slew rate limiting)
 
 	static bool	arm_nothrottle()
@@ -337,6 +341,8 @@ PX4FMU::PX4FMU() :
 	_safety_off(false),
 	_safety_disabled(false),
 	_to_safety(nullptr),
+	_control_mode_sub(-1),
+	_control_mode{},
 	_mot_t_max(0.0f)
 {
 	for (unsigned i = 0; i < _max_actuators; i++) {
@@ -920,6 +926,7 @@ PX4FMU::cycle()
 		_armed_sub = orb_subscribe(ORB_ID(actuator_armed));
 		_param_sub = orb_subscribe(ORB_ID(parameter_update));
 		_adc_sub = orb_subscribe(ORB_ID(adc_report));
+		_control_mode_sub = orb_subscribe(ORB_ID(vehicle_control_mode));
 
 		/* initialize PWM limit lib */
 		pwm_limit_init(&_pwm_limit);
@@ -1101,8 +1108,13 @@ PX4FMU::cycle()
 			}
 
 			/* do mixing */
+			bool updated;
+			orb_check(_control_mode_sub, &updated);
+			if (updated) {
+				orb_copy(ORB_ID(vehicle_control_mode), _control_mode_sub, &_control_mode);
+			}
 			float outputs[_max_actuators];
-			num_outputs = _mixers->mix(outputs, num_outputs, NULL);
+			num_outputs = _mixers->mix(outputs, num_outputs, NULL, _control_mode.flag_control_offboard_enabled);
 
 			/* disable unused ports by setting their output to NaN */
 			for (size_t i = 0; i < sizeof(outputs) / sizeof(outputs[0]); i++) {

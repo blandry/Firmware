@@ -275,7 +275,7 @@ out:
 }
 
 unsigned
-SimpleMixer::mix(float *outputs, unsigned space, uint16_t *status_reg)
+SimpleMixer::mix(float *outputs, unsigned space, uint16_t *status_reg, bool passthrough)
 {
 	float		sum = 0.0f;
 

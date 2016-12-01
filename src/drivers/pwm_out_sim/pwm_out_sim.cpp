@@ -79,6 +79,7 @@
 #include <uORB/topics/actuator_controls.h>
 #include <uORB/topics/actuator_armed.h>
 #include <uORB/topics/actuator_outputs.h>
+#include <uORB/topics/vehicle_control_mode.h>
 
 #include <systemlib/err.h>
 
@@ -160,6 +161,8 @@ private:
 	uint32_t	gpio_read(void);
 	int		gpio_ioctl(device::file_t *filp, int cmd, unsigned long arg);
 
+	int		_control_mode_sub; /**< vehicle control mode subscription */
+	struct vehicle_control_mode_s _control_mode; /**< vehicle control mode */
 };
 
 namespace
@@ -191,7 +194,9 @@ PWMSim::PWMSim() :
 	_groups_required(0),
 	_groups_subscribed(0),
 	_task_should_exit(false),
-	_mixers(nullptr)
+	_mixers(nullptr),
+	_control_mode_sub(-1),
+	_control_mode{}
 {
 	_debug_enabled = true;
 	memset(_controls, 0, sizeof(_controls));
@@ -380,6 +385,7 @@ PWMSim::task_main()
 	_current_update_rate = 0;
 
 	_armed_sub = orb_subscribe(ORB_ID(actuator_armed));
+	_control_mode_sub = orb_subscribe(ORB_ID(vehicle_control_mode));
 
 	/* advertise the mixed control outputs */
 	actuator_outputs_s outputs = {};
@@ -481,7 +487,12 @@ PWMSim::task_main()
 			}
 
 			/* do mixing */
-			num_outputs = _mixers->mix(&outputs.output[0], num_outputs, NULL);
+			bool updated;
+			orb_check(_control_mode_sub, &updated);
+			if (updated) {
+				orb_copy(ORB_ID(vehicle_control_mode), _control_mode_sub, &_control_mode);
+			}
+			num_outputs = _mixers->mix(&outputs.output[0], num_outputs, NULL, _control_mode.flag_control_offboard_enabled);
 			outputs.noutputs = num_outputs;
 			outputs.timestamp = hrt_absolute_time();
 

@@ -99,13 +99,13 @@ MixerGroup::reset()
 }
 
 unsigned
-MixerGroup::mix(float *outputs, unsigned space, uint16_t *status_reg)
+MixerGroup::mix(float *outputs, unsigned space, uint16_t *status_reg, bool passthrough)
 {
 	Mixer	*mixer = _first;
 	unsigned index = 0;
 
 	while ((mixer != nullptr) && (index < space)) {
-		index += mixer->mix(outputs + index, space - index, status_reg);
+		index += mixer->mix(outputs + index, space - index, status_reg, passthrough);
 		mixer = mixer->_next;
 	}
 

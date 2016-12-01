@@ -94,7 +94,8 @@ MultirotorMixer::MultirotorMixer(ControlCallback control_cb,
 	_limits_pub(),
 	_rotor_count(_config_rotor_count[(MultirotorGeometryUnderlyingType)geometry]),
 	_rotors(_config_index[(MultirotorGeometryUnderlyingType)geometry]),
-	_outputs_prev(new float[_rotor_count])
+	_outputs_prev(new float[_rotor_count]),
+	_passthrough_scaler{1.0, 1.0, 0.0, -1.0, 1.0}
 {
 	memset(_outputs_prev, _idle_speed, _rotor_count * sizeof(float));
 }
@@ -220,7 +221,7 @@ MultirotorMixer::from_text(Mixer::ControlCallback control_cb, uintptr_t cb_handl
 }
 
 unsigned
-MultirotorMixer::mix(float *outputs, unsigned space, uint16_t *status_reg)
+MultirotorMixer::mix(float *outputs, unsigned space, uint16_t *status_reg, bool passthrough)
 {
 	/* Summary of mixing strategy:
 	1) mix roll, pitch and thrust without yaw.
@@ -232,6 +233,17 @@ MultirotorMixer::mix(float *outputs, unsigned space, uint16_t *status_reg)
 	3) mix in yaw and scale if it leads to limit violation.
 	4) scale all outputs to range [idle_speed,1]
 	*/
+
+	if (passthrough) {
+		// do passthrough mixing instead (mixing is done offboard)
+
+		outputs[0] = scale(_passthrough_scaler, get_control(0, 0));
+		outputs[1] = scale(_passthrough_scaler, get_control(0, 1));
+		outputs[2] = scale(_passthrough_scaler, get_control(0, 2));
+		outputs[3] = scale(_passthrough_scaler, get_control(0, 3));
+
+		return 4;
+	}
 
 	float		roll    = constrain(get_control(0, 0) * _roll_scale, -1.0f, 1.0f);
 	float		pitch   = constrain(get_control(0, 1) * _pitch_scale, -1.0f, 1.0f);
@@ -402,4 +414,3 @@ MultirotorMixer::groups_required(uint32_t &groups)
 	/* XXX for now, hardcoded to indexes 0-3 in control group zero */
 	groups |= (1 << 0);
 }
-

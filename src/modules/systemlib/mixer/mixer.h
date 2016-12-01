@@ -174,7 +174,7 @@ public:
 	 * @param space			The number of available entries in the output array;
 	 * @return			The number of entries in the output array that were populated.
 	 */
-	virtual unsigned		mix(float *outputs, unsigned space, uint16_t *status_reg) = 0;
+	virtual unsigned		mix(float *outputs, unsigned space, uint16_t *status_reg, bool passthrough = false) = 0;
 
 	/**
 	 * Analyses the mix configuration and updates a bitmask of groups
@@ -259,7 +259,7 @@ public:
 	MixerGroup(ControlCallback control_cb, uintptr_t cb_handle);
 	~MixerGroup();
 
-	virtual unsigned		mix(float *outputs, unsigned space, uint16_t *status_reg);
+	virtual unsigned		mix(float *outputs, unsigned space, uint16_t *status_reg, bool passthrough = false);
 	virtual void			groups_required(uint32_t &groups);
 
 	/**
@@ -367,7 +367,7 @@ public:
 	 */
 	static NullMixer		*from_text(const char *buf, unsigned &buflen);
 
-	virtual unsigned		mix(float *outputs, unsigned space, uint16_t *status_reg);
+	virtual unsigned		mix(float *outputs, unsigned space, uint16_t *status_reg, bool passthrough = false);
 	virtual void			groups_required(uint32_t &groups);
 };
 
@@ -432,7 +432,7 @@ public:
 			uint16_t mid,
 			uint16_t max);
 
-	virtual unsigned		mix(float *outputs, unsigned space, uint16_t *status_reg);
+	virtual unsigned		mix(float *outputs, unsigned space, uint16_t *status_reg, bool passthrough = false);
 	virtual void			groups_required(uint32_t &groups);
 
 	/**
@@ -536,7 +536,7 @@ public:
 			const char *buf,
 			unsigned &buflen);
 
-	virtual unsigned		mix(float *outputs, unsigned space, uint16_t *status_reg);
+	virtual unsigned		mix(float *outputs, unsigned space, uint16_t *status_reg, bool passthrough = false);
 	virtual void			groups_required(uint32_t &groups);
 
 	/**
@@ -566,6 +566,8 @@ private:
 	const Rotor			*_rotors;
 
 	float 				*_outputs_prev = nullptr;
+
+	struct mixer_scaler_s _passthrough_scaler;
 
 	/* do not allow to copy due to ptr data members */
 	MultirotorMixer(const MultirotorMixer &);
