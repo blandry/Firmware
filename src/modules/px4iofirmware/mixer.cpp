@@ -244,7 +244,7 @@ mixer_tick(void)
 
 		/* poor mans mutex */
 		in_mixer = true;
-		mixed = mixer_group.mix(&outputs[0], PX4IO_SERVO_COUNT, &r_mixer_limits);
+		mixed = mixer_group.mix(&outputs[0], PX4IO_SERVO_COUNT, &r_mixer_limits, mixer_passthrough);
 		in_mixer = false;
 
 		/* the pwm limit call takes care of out of band errors */
@@ -530,7 +530,7 @@ mixer_set_failsafe()
 	}
 
 	/* mix */
-	mixed = mixer_group.mix(&outputs[0], PX4IO_SERVO_COUNT, &r_mixer_limits);
+	mixed = mixer_group.mix(&outputs[0], PX4IO_SERVO_COUNT, &r_mixer_limits, mixer_passthrough);
 
 	/* scale to PWM and update the servo outputs as required */
 	for (unsigned i = 0; i < mixed; i++) {

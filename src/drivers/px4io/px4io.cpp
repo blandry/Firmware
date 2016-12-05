@@ -87,6 +87,7 @@
 #include <uORB/topics/servorail_status.h>
 #include <uORB/topics/parameter_update.h>
 #include <uORB/topics/multirotor_motor_limits.h>
+#include <uORB/topics/vehicle_control_mode.h>
 
 #include <debug.h>
 
@@ -327,6 +328,9 @@ private:
 	float			_last_throttle; ///< last throttle value for battery calculation
 	bool			_test_fmu_fail; ///< To test what happens if IO looses FMU
 
+	int		_control_mode_sub; /**< vehicle control mode subscription */
+	struct vehicle_control_mode_s _control_mode; /**< vehicle control mode */
+
 #ifdef CONFIG_ARCH_BOARD_PX4FMU_V1
 	bool			_dsm_vcc_ctl;		///< true if relay 1 controls DSM satellite RX power
 #endif
@@ -561,7 +565,9 @@ PX4IO::PX4IO(device::Device *interface) :
 	_analog_rc_rssi_stable(false),
 	_analog_rc_rssi_volt(-1.0f),
 	_last_throttle(0.0f),
-	_test_fmu_fail(false)
+	_test_fmu_fail(false),
+	_control_mode_sub(-1),
+	_control_mode{}
 #ifdef CONFIG_ARCH_BOARD_PX4FMU_V1
 	, _dsm_vcc_ctl(false)
 #endif
@@ -960,6 +966,7 @@ PX4IO::task_main()
 	_t_vehicle_control_mode = orb_subscribe(ORB_ID(vehicle_control_mode));
 	_t_param = orb_subscribe(ORB_ID(parameter_update));
 	_t_vehicle_command = orb_subscribe(ORB_ID(vehicle_command));
+	_control_mode_sub = orb_subscribe(ORB_ID(vehicle_control_mode));
 
 	if ((_t_actuator_controls_0 < 0) ||
 	    (_t_actuator_armed < 0) ||
@@ -1307,6 +1314,11 @@ PX4IO::io_set_control_state(unsigned group)
 				orb_copy(ORB_ID(actuator_controls_0), _t_actuator_controls_0, &controls);
 				perf_set_elapsed(_perf_sample_latency, hrt_elapsed_time(&controls.timestamp_sample));
 			}
+
+			orb_check(_control_mode_sub, &changed);
+			if (changed) {
+				orb_copy(ORB_ID(vehicle_control_mode), _control_mode_sub, &_control_mode);
+			}
 		}
 		break;
 
@@ -1371,6 +1383,16 @@ PX4IO::io_set_control_state(unsigned group)
 
 	if (!_test_fmu_fail) {
 		/* copy values to registers in IO */
+		uint16_t passthrough;
+		if (_control_mode.flag_control_offboard_enabled)
+		{
+			passthrough = 1;
+		}
+		else
+		{
+			passthrough = 0;
+		}
+		io_reg_set(PX4IO_PAGE_MIXER, PX4IO_P_MIXER_PASSTHROUGH, &passthrough, 1);
 		return io_reg_set(PX4IO_PAGE_CONTROLS, group * PX4IO_PROTOCOL_MAX_CONTROL_COUNT, regs, _max_controls);
 
 	} else {

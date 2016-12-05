@@ -806,6 +806,19 @@ registers_set_one(uint8_t page, uint8_t offset, uint16_t value)
 
 		break;
 
+	case PX4IO_PAGE_MIXER:
+		switch (offset) {
+		case PX4IO_P_MIXER_PASSTHROUGH:
+			if (value)
+			{
+				mixer_passthrough = true;
+			}
+			else
+			{
+				mixer_passthrough = false;
+			}
+		}
+
 	default:
 		return -1;
 	}

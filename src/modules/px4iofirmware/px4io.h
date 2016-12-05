@@ -148,6 +148,9 @@ struct sys_state_s {
 extern struct sys_state_s system_state;
 extern float dt;
 
+/* mixer state */
+extern bool mixer_passthrough;
+
 /*
  * PWM limit structure
  */
@@ -244,4 +247,3 @@ extern void	isr_debug(uint8_t level, const char *fmt, ...);
 
 /** schedule a reboot */
 extern void schedule_reboot(uint32_t time_delta_usec);
-

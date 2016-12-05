@@ -296,6 +296,9 @@ enum {							/* DSM bind states */
 /* PWM disarmed values that are active, even when SAFETY_SAFE */
 #define PX4IO_PAGE_DISARMED_PWM		108			/* 0..CONFIG_ACTUATOR_COUNT-1 */
 
+#define PX4IO_PAGE_MIXER 	 109
+#define PX4IO_P_MIXER_PASSTHROUGH		0 	 /* use passthrough for actuator mixing */
+
 /**
  * As-needed mixer data upload.
  *

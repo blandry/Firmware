@@ -72,6 +72,8 @@ pwm_limit_t pwm_limit;
 
 float dt;
 
+bool mixer_passthrough = false;
+
 /*
  * a set of debug buffers to allow us to send debug information from ISRs
  */
@@ -415,4 +417,3 @@ user_start(int argc, char *argv[])
 		}
 	}
 }
-
