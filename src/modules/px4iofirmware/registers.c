@@ -817,7 +817,10 @@ registers_set_one(uint8_t page, uint8_t offset, uint16_t value)
 			{
 				mixer_passthrough = false;
 			}
+			break;
 		}
+
+		break;
 
 	default:
 		return -1;
